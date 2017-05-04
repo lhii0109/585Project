@@ -4,9 +4,9 @@ Clusters <- detectCores()-1
 cl <- makePSOCKcluster(Clusters)
 registerDoParallel(cl)
 
-source("backgroundfunctions.R")
+source("background-functions.R")
   
-source("585Diagnostic.R")
+source("585-Diagnostic.R")
   
 Result1 <- Diagnostic(M = 3, K = 80, x = X, y = y, Initialize = 1, Model = "SandProbit", Methodname = "SandwichProbit")
 Result2 <- Diagnostic(M = 3, K = 80, x = X, y = y, Initialize = 1, Model = "ASISProbit", Methodname = "ASISProbit")
