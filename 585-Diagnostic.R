@@ -1,41 +1,30 @@
-require(coda)
-require(doParallel)
-require(ggplot2)
-require(foreach)
-require(tidyverse)
-require(plyr)
-require(dplyr)
-require(tidyr)
-
-
 Diagnostic <- function(Initials = NA, MCMC = NA, M = 5, K, x, y, Initialize = 0, Model = NA, nu = 3, nunot = 3, c = 1, pargroups = 1, Methodname, GewInit = .1, GewEnd = .5, export = NA, ...){
   
   n <- length(y)
   p <- dim(x)[2]
-  
   if(Initialize == 1){
     if(is.na(M) == T){
       M <- 5
     }
-    initial <- rnorm(dim(x)[2])
-    Initials <- initfunction(initial, Model, MCMC, M, K, c, nu, nunot, x, y)
+    initial <- as.matrix(rnorm(dim(x)[2]))
+    Initials <- initfunction(initial, Model, MCMC, M, K, c, nu, nunot, x, y, p)
   }
   
   if(Model == "ASISProbit"){
-    out <- foreach(i = 1:M, .export = c("AProbit", "bounds2")) %dopar% {AProbit(t(as.matrix(Initials[[i]])), K, p, x, y)}
+    out <- foreach(i = 1:M, .export = c("AProbit", "bounds2", "bounds")) %dopar% {AProbit(t(as.matrix(Initials[[i]])), K, p, x, y)}
   }
   
   
   if(Model == "SandProbit"){
-    out <- foreach(i = 1:M, .export = c("SandProbit")) %dopar% SandProbit(t(as.matrix(Initials[[i]])), M, K, p, x, y)
+    out <- foreach(i = 1:M, .export = c("SandProbit", "bounds2", "bounds")) %dopar% SandProbit(t(as.matrix(Initials[[i]])), M, K, p, x, y)
   }
   
   if(Model == "ASISRobit"){
-    out <- foreach(i = 1:M, .export = c("ASISRobit", "conditionalmeansig", "bounds", "gammaout")) %dopar% ASISRobit(t(as.matrix(Initials[[i]])), M, K, p, x, y, nu, nunot, c)  
+    out <- foreach(i = 1:M, .export = c("ASISRobit", "conditionalmeansig", "bounds2", "bounds", "gammaout")) %dopar% ASISRobit(t(as.matrix(Initials[[i]])), M, K, p, x, y, nu, nunot, c)  
   }
   
   if(Model == "SandRobit"){
-    out <- foreach(i = 1:M, .export = c("SandRobit", "conditionalmeansig", "bounds2", "gammaout")) %dopar% SandRobit(t(as.matrix(Initials[[i]])), M, K, p, x, y, nu, nunot, c)  
+    out <- foreach(i = 1:M, .export = c("SandRobit", "conditionalmeansig", "bounds", "bounds2", "gammaout")) %dopar% SandRobit(t(as.matrix(Initials[[i]])), M, K, p, x, y, nu, nunot, c)  
   }
   
   if(Model == "NA"){
@@ -109,8 +98,9 @@ Diagnostic <- function(Initials = NA, MCMC = NA, M = 5, K, x, y, Initialize = 0,
   
   
   
-  finalout <- list(Chains = out,ACF =  ACF,GR = Gel, Geweke = list(Geweke = gew, Fractions = c(GewInit, GewEnd)))
+  finalout <- list(Chains = out,ACF =  ACF,GR = Gel, Geweke = list(Geweke = gew, Fractions = c(GewInit, GewEnd)), Initial.Values = Initials)
   
   return(finalout)  
   
 }
+
