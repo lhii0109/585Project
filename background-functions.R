@@ -1,8 +1,17 @@
+require(coda)
+require(doParallel)
+require(ggplot2)
+require(foreach)
+require(tidyverse)
+require(plyr)
+require(dplyr)
+require(tidyr)
 
 ###### Plotting Functions
 
 ## Plots GR Diagnostic Values
-
+Chains <- Result1
+Chains2 <- Result2
 GelmanPlot <- function(Chains, Chains2, pargroup = 1, parnames, name1, name2, p){
   
   #It depends on if you have one group or two how the list structure is
@@ -17,15 +26,20 @@ GelmanPlot <- function(Chains, Chains2, pargroup = 1, parnames, name1, name2, p)
     G <- Chains[[3]]
     G2 <- Chains2[[3]]
     p <- dim(as.matrix(Chains[[1]][[1]]))[2]
+  
   }
   #Bind them into one data frame
   Bout <- as.data.frame(rbind(G, G2))
+  
   #Include Indicator for which model it came from
   Bout <- as.data.frame(cbind(Bout, rep(c(name1, name2), each = dim(G)[1])))
+  
   #Naming model column appropriately
   colnames(Bout)[length(colnames(Bout))] <- "Method" 
+
   ## Breaking them up by parameter
   kk <- kkFunc(Bout, p, parnames, name1, name2)
+  
   #Plotting
   z <- plotGR(kk, p)
   
@@ -126,7 +140,10 @@ AProbit <- function(initial, K, p, x, y){
 }
 
 #### sandwich Probit
-
+M <- 3
+K <- 60
+x <- X
+initial <- rnorm(3)
 SandProbit <- function(initial, M, K, p, x, y){
   
   #Initializing values
@@ -375,7 +392,7 @@ InitialGenerator <- function(Betastore, M, p){
   return(seeds) 
 }
 
-initfunction <- function(Initials, Model, MCMC, M, K, c, nu, nunot, x, y){
+initfunction <- function(Initials, Model, MCMC, M, K, c, nu, nunot, x, y,p){
   
   if(Model == "ASISProbit"){
     out <- AProbit(Initials, K, p, x, y)
@@ -608,13 +625,14 @@ MCMCfunc <- function(out, M){
 }
 
 
-### Isolates the parameters into separate list components for graphing
+### Isolates the parameters into separate list components for graphing GR diagnostics
+
 
 kkFunc <- function(Bout, p, parnames, method1, method2){
   
   
   if(p == 1){
-    kk <- data.frame(c(Bout$x1), Bout$Iteration, Bout$Method, rep(paste("Par", 1:p, sep = "."), each = length(Bout$x1)))
+    kk <- data.frame(c(Bout$X1), Bout$Iteration, Bout$Method, rep(paste("Par", 1:p, sep = "."), each = length(Bout$X1)))
     
     colnames(kk) <- c("Value", "Iteration", "Method", "Par")
     
@@ -630,7 +648,7 @@ kkFunc <- function(Bout, p, parnames, method1, method2){
   
   
   if(p == 2){
-    kk <- data.frame(c(Bout$x1, Bout$x2), Bout$Iteration, Bout$Method, rep(paste("Par", 1:p, sep = "."), each = length(Bout$x1)))
+    kk <- data.frame(c(Bout$X1, Bout$X2), Bout$Iteration, Bout$Method, rep(paste("Par", 1:p, sep = "."), each = length(Bout$X1)))
     
     colnames(kk) <- c("Value", "Iteration", "Method", "Par")
     
@@ -647,12 +665,11 @@ kkFunc <- function(Bout, p, parnames, method1, method2){
   }  
   
   if(p == 3){
-    kk <- data.frame(c(Bout$x1, Bout$x2, Bout$x3), Bout$Iteration, Bout$Method, rep(paste("Par", 1:p, sep = "."), each = length(Bout$x1)))
+    kk <- data.frame(c(Bout$X1, Bout$X2, Bout$X3), Bout$Iteration, Bout$Method, rep(paste("Par", 1:p, sep = "."), each = length(Bout$X1)))
     
     colnames(kk) <- c("Value", "Iteration", "Method", "Par")
     
     kk$Iteration <- as.numeric(as.character(kk$Iteration))
-    kk$Par
     
     kk.B1 <- kk[kk$Par == "Par.1",]
     
@@ -668,7 +685,7 @@ kkFunc <- function(Bout, p, parnames, method1, method2){
   
   
   if(p == 4){
-    kk <- data.frame(c(Bout$x1, Bout$x2, Bout$x3, Bout$x4), Bout$Iteration, Bout$Method, rep(paste("Par", 1:p, sep = "."), each = length(Bout$x1)))
+    kk <- data.frame(c(Bout$X1, Bout$X2, Bout$X3, Bout$X4), Bout$Iteration, Bout$Method, rep(paste("Par", 1:p, sep = "."), each = length(Bout$X1)))
     
     colnames(kk) <- c("Value", "Iteration", "Method", "Par")
     
@@ -691,7 +708,7 @@ kkFunc <- function(Bout, p, parnames, method1, method2){
   
   
   if(p == 5){
-    kk <- data.frame(c(Bout$x1, Bout$x2, Bout$x3, Bout$x4, Bout$x5), Bout$Iteration, Bout$Method, rep(paste("Par", 1:p, sep = "."), each = length(Bout$x1)))
+    kk <- data.frame(c(Bout$X1, Bout$X2, Bout$X3, Bout$X4, Bout$X5), Bout$Iteration, Bout$Method, rep(paste("Par", 1:p, sep = "."), each = length(Bout$X1)))
     
     colnames(kk) <- c("Value", "Iteration", "Method", "Par")
     
@@ -721,7 +738,7 @@ kkFunc <- function(Bout, p, parnames, method1, method2){
   }  
   
   if(p == 6){
-    kk <- data.frame(c(Bout$x1, Bout$x2, Bout$x3, Bout$x4, Bout$x5, Bout$x6), Bout$Iteration, Bout$Method, rep(paste("Par", 1:p, sep = "."), each = length(Bout$x1)))
+    kk <- data.frame(c(Bout$X1, Bout$X2, Bout$X3, Bout$X4, Bout$X5, Bout$X6), Bout$Iteration, Bout$Method, rep(paste("Par", 1:p, sep = "."), each = length(Bout$X1)))
     
     colnames(kk) <- c("Value", "Iteration", "Method", "Par")
     
@@ -751,6 +768,8 @@ kkFunc <- function(Bout, p, parnames, method1, method2){
   } 
   return(kk)
 }
+
+
 
 
 ### Plots GR Diagnostic values
